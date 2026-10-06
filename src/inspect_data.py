@@ -6,6 +6,7 @@
 - カラム名
 - データ型 (pandas が推論した dtype)
 - 欠損数・欠損率
+- ID カラム (``*_id``) のユニーク数・重複数
 
 Usage:
     python src/inspect_data.py
@@ -25,6 +26,9 @@ import pandas as pd
 PROJECT_ROOT: Path = Path(__file__).resolve().parents[1]
 DEFAULT_DATA_DIR: Path = PROJECT_ROOT / "data" / "raw"
 
+# Olist のデータセットでは ID カラムはすべてこの接尾辞で命名されている
+ID_COLUMN_SUFFIX: str = "_id"
+
 
 @dataclass(frozen=True)
 class CsvSummary:
@@ -34,11 +38,14 @@ class CsvSummary:
         name: ファイル名 (拡張子なし)。
         n_rows: 行数 (ヘッダ行を除く)。
         columns: カラムごとの情報 (column / dtype / missing / missing_rate)。
+        ids: ID カラムごとの情報 (column / unique / duplicated)。
+            ID カラムが無い場合は空の DataFrame。
     """
 
     name: str
     n_rows: int
     columns: pd.DataFrame
+    ids: pd.DataFrame
 
 
 def summarize_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -69,8 +76,35 @@ def summarize_columns(df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
+def summarize_ids(df: pd.DataFrame) -> pd.DataFrame:
+    """ID カラム (``*_id``) ごとにユニーク数と重複数をまとめる.
+
+    重複数は「2 回目以降に出現した行の数」(= 非欠損行数 - ユニーク数) とする。
+    重複数が 0 であれば、そのカラムは単独で主キーになり得る。
+
+    Args:
+        df: 対象の DataFrame。
+
+    Returns:
+        1 行 = 1 ID カラムの DataFrame。列は以下の通り。
+
+        - ``column``: カラム名
+        - ``unique``: ユニーク数 (欠損は除く)
+        - ``duplicated``: 重複数 (欠損は除く)
+    """
+    id_columns = [c for c in df.columns if c.endswith(ID_COLUMN_SUFFIX)]
+    rows = []
+    for col in id_columns:
+        values = df[col].dropna()
+        n_unique = values.nunique()
+        rows.append(
+            {"column": col, "unique": n_unique, "duplicated": len(values) - n_unique}
+        )
+    return pd.DataFrame(rows, columns=["column", "unique", "duplicated"])
+
+
 def inspect_csv(path: Path) -> CsvSummary:
-    """CSV を読み込み、行数とカラム情報を集計する.
+    """CSV を読み込み、行数・カラム情報・ID 情報を集計する.
 
     Args:
         path: CSV ファイルのパス。
@@ -79,7 +113,12 @@ def inspect_csv(path: Path) -> CsvSummary:
         集計結果。
     """
     df = pd.read_csv(path)
-    return CsvSummary(name=path.stem, n_rows=len(df), columns=summarize_columns(df))
+    return CsvSummary(
+        name=path.stem,
+        n_rows=len(df),
+        columns=summarize_columns(df),
+        ids=summarize_ids(df),
+    )
 
 
 def print_summary(summary: CsvSummary) -> None:
@@ -93,6 +132,9 @@ def print_summary(summary: CsvSummary) -> None:
     print(f"  rows: {summary.n_rows:,} / columns: {len(summary.columns)}")
     print("-" * 80)
     print(summary.columns.to_string(index=False))
+    if not summary.ids.empty:
+        print("-" * 80)
+        print(summary.ids.to_string(index=False))
     print()
 
 
