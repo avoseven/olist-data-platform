@@ -5,7 +5,7 @@
 
 ## 背景
 
-BigQuery を使うための GCP プロジェクト `olist-data-platform` を作成した。
+BigQuery を使うための GCP プロジェクトを作成した (名前: `olist-data-platform`、ID: `olist-data-platform-511008`)。
 このプロジェクトは費用をかけずに進めることを前提としている。
 
 以前作成した請求先アカウントは無料トライアル用のもので、トライアルはすでに終了している。
