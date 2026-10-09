@@ -62,6 +62,8 @@ erDiagram
   - `order_items`: `shipping_limit_date`
   - `order_reviews`: `review_creation_date` (時刻は常に 00:00:00), `review_answer_timestamp`
 - `products` の `product_name_lenght` / `product_description_lenght` は元データのスペルミス (`length` ではない)。
+- **`order_reviews` のレビュー本文には、引用符で囲まれた改行が含まれる。** ファイルの行数 (104,719 行) とレコード数 (99,224 件) が一致しない。BigQuery に読み込むときは `allow_quoted_newlines` が必要。
+- **`product_category_name_translation.csv` だけ、先頭に BOM がある。** UTF-8 として読むと最初の列名に BOM が混ざるため、`utf-8-sig` で読む。
 
 ### 顧客
 
