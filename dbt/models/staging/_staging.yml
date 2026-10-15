@@ -1,0 +1,39 @@
+# staging モデルの説明とテスト
+
+version: 2
+
+models:
+  - name: stg_orders
+    description: 1 行 = 1 注文。
+    columns:
+      - name: order_id
+        description: 注文 ID。主キー。
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: 顧客 ID。注文ごとに発行されるため、注文と 1:1 になる。人を識別するには customer_unique_id を使う。
+        data_tests:
+          - unique
+          - not_null
+      - name: order_status
+        description: 注文のステータス。
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [delivered, shipped, canceled, unavailable, invoiced, processing, created, approved]
+      - name: order_purchased_at
+        description: 購入日時 (タイムゾーンなし)。
+        data_tests:
+          - not_null
+      - name: order_approved_at
+        description: 支払いの承認日時 (タイムゾーンなし)。
+      - name: order_delivered_carrier_at
+        description: 配送業者に引き渡した日時 (タイムゾーンなし)。未発送の注文では NULL。
+      - name: order_delivered_customer_at
+        description: 顧客に配達された日時 (タイムゾーンなし)。未配達の注文では NULL。
+      - name: order_estimated_delivery_date
+        description: 購入時に顧客に伝えた配送予定日。
+        data_tests:
+          - not_null

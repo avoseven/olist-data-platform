@@ -1,0 +1,5 @@
+# dbt lint / dbt format の設定 (SQLFluff の形式)
+
+[sqlfluff]
+templater = dbt
+dialect = bigquery

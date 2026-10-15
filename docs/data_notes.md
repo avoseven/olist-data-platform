@@ -58,6 +58,9 @@ erDiagram
 
 - **郵便番号 (`*_zip_code_prefix`) は文字列として読む。** 先頭が 0 のものがあり、数値として読むと 0 が消えて結合できなくなる。
 - **日時の列は文字列として格納されている。** 日時型への変換が必要。
+  - 形式は `YYYY-MM-DD HH:MM:SS` で統一されている。
+  - **タイムゾーンの情報がない。** BigQuery では `TIMESTAMP` (UTC の絶対時刻) ではなく `DATETIME` に変換する。
+  - `order_estimated_delivery_date` は時刻が常に 00:00:00 で、実質的には日付。
   - `orders`: `order_purchase_timestamp`, `order_approved_at`, `order_delivered_carrier_date`, `order_delivered_customer_date`, `order_estimated_delivery_date`
   - `order_items`: `shipping_limit_date`
   - `order_reviews`: `review_creation_date` (時刻は常に 00:00:00), `review_answer_timestamp`
