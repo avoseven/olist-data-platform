@@ -27,12 +27,31 @@ models:
         description: 購入日時 (タイムゾーンなし)。
         data_tests:
           - not_null
+      # 以下の 3 列は、注文の状況によっては欠損するため、無条件には非欠損を要求しない。
+      # ただし配達済みの注文ではすべて揃っているはずなので、その条件でテストする。
+      # 元データには例外があり (docs/data_notes.md)、staging では行を除かないため、
+      # エラーではなく警告にする。例外の扱いは mart で決める。
       - name: order_approved_at
-        description: 支払いの承認日時 (タイムゾーンなし)。
+        description: 支払いの承認日時 (タイムゾーンなし)。未承認の注文では NULL。
+        data_tests:
+          - not_null:
+              config:
+                where: "order_status = 'delivered'"
+                severity: warn
       - name: order_delivered_carrier_at
         description: 配送業者に引き渡した日時 (タイムゾーンなし)。未発送の注文では NULL。
+        data_tests:
+          - not_null:
+              config:
+                where: "order_status = 'delivered'"
+                severity: warn
       - name: order_delivered_customer_at
         description: 顧客に配達された日時 (タイムゾーンなし)。未配達の注文では NULL。
+        data_tests:
+          - not_null:
+              config:
+                where: "order_status = 'delivered'"
+                severity: warn
       - name: order_estimated_delivery_date
         description: 購入時に顧客に伝えた配送予定日。
         data_tests:

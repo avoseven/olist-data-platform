@@ -79,6 +79,8 @@ erDiagram
 - `order_status` の内訳: `delivered` 96,478 / `shipped` 1,107 / `canceled` 625 / `unavailable` 609 / `invoiced` 314 / `processing` 301 / `created` 5 / `approved` 2
 - **明細 (`order_items`) が 1 件もない注文が 775 件ある。** 大半は `unavailable` (603 件) と `canceled` (164 件)。
 - 配送日時は未配送の注文で欠損する (`order_delivered_customer_date` の欠損は 2,965 件)。
+- **配達済み (`delivered`) なのに日時が欠損している注文がある。** 承認日時 14 件、発送日時 2 件、配達日時 8 件。
+  元データの不整合であり、staging では行を残したまま、dbt のテストで警告として検出している。扱いは mart で決める。
 
 ### レビュー
 
