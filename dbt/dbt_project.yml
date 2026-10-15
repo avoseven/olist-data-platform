@@ -1,0 +1,23 @@
+# dbt プロジェクトの設定
+# 層の構成は docs/decisions/002_layer_architecture.md を参照
+
+name: olist
+version: "1.0.0"
+
+# profiles.yml の中の、どの接続設定を使うか
+profile: olist
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+
+models:
+  olist:
+    # staging: 型・列名・表記を整える層。raw と 1:1 のビューとして作る
+    staging:
+      +schema: olist_staging
+      +materialized: view
+    # marts: 分析の目的に合わせて結合・集約する層。テーブルとして作る
+    marts:
+      +schema: olist_mart
+      +materialized: table

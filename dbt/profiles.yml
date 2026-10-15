@@ -1,0 +1,20 @@
+# BigQuery への接続設定
+#
+# 認証には gcloud の Application Default Credentials (ADC) を使う (method: oauth)。
+# 事前に `gcloud auth application-default login` が必要。
+# このファイルには秘密情報が含まれないため、git で管理する。
+
+olist:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth
+      # GCP プロジェクト ID。環境変数 GCP_PROJECT_ID で上書きできる
+      database: "{{ env_var('GCP_PROJECT_ID', 'olist-data-platform-511008') }}"
+      # 既定のデータセット。モデルは dbt_project.yml で層ごとのデータセットを指定するため、
+      # 指定のないもの (テストの結果の保存先など) だけがここに作られる
+      schema: olist_staging
+      # raw / staging / mart のデータセットは同じロケーションにそろえる必要がある
+      location: US
+      threads: 4
