@@ -222,3 +222,51 @@ models:
         data_tests:
           - unique
           - not_null
+
+  - name: stg_order_payments
+    description: 1 行 = 注文に対する支払い 1 回。1 つの注文を複数の方法・回数に分けて支払うことがある。
+    data_tests:
+      # 主キーは (order_id, payment_sequential) の複合キー
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [order_id, payment_sequential]
+    columns:
+      - name: order_id
+        description: 注文 ID。
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_orders')
+                field: order_id
+      - name: payment_sequential
+        description: 注文の中での支払いの連番。80 件の注文では 2 から始まる (1 番目の支払いが欠けているわけではなく、金額は明細と一致する)。
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+      - name: payment_type
+        description: 支払い方法。not_defined の 3 件はキャンセルされた注文で、金額は 0。
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [credit_card, boleto, voucher, debit_card, not_defined]
+      - name: payment_installments
+        description: 分割払いの回数。一括払いは 1。
+        data_tests:
+          - not_null
+          # クレジットカードで 0 回になっている不整合な値が 2 件ある
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+              config:
+                severity: warn
+      - name: payment_value
+        description: 支払い金額 (ブラジルレアル)。voucher と not_defined では 0 のことがある。
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
