@@ -121,6 +121,10 @@ models:
         description: 商品 ID。
         data_tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_products')
+                field: product_id
       - name: seller_id
         description: 販売者 ID。sellers テーブルは取り込んでいないため、結合先はない (ADR 001)。
         data_tests:
@@ -144,3 +148,77 @@ models:
           - dbt_utils.accepted_range:
               arguments:
                 min_value: 0
+
+  - name: stg_products
+    description: 1 行 = 1 商品。
+    columns:
+      - name: product_id
+        description: 商品 ID。主キー。
+        data_tests:
+          - unique
+          - not_null
+      # カテゴリ・重さ・サイズは、商品であれば本来あるはずなのでテストする。
+      # 元データには例外があり (docs/data_notes.md)、staging では行を除かないため警告にする。
+      - name: product_category_name
+        description: 商品カテゴリ名 (ポルトガル語)。610 件は欠損している。
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+          # 英訳のないカテゴリが 2 種類 (13 件) ある
+          - relationships:
+              arguments:
+                to: ref('stg_product_category_name_translation')
+                field: product_category_name
+              config:
+                severity: warn
+      - name: product_name_length
+        description: 商品名の文字数。元データの列名 product_name_lenght のスペルミスを直したもの。
+      - name: product_description_length
+        description: 商品説明の文字数。元データの列名 product_description_lenght のスペルミスを直したもの。
+      - name: product_photos_qty
+        description: 商品写真の枚数。
+      - name: product_weight_g
+        description: 重さ (g)。0 の商品が 4 件ある。
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+              config:
+                severity: warn
+      - name: product_length_cm
+        description: 長さ (cm)。
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: product_height_cm
+        description: 高さ (cm)。
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: product_width_cm
+        description: 幅 (cm)。
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+
+  - name: stg_product_category_name_translation
+    description: 1 行 = 1 カテゴリ。ポルトガル語名と英語名の対応。
+    columns:
+      - name: product_category_name
+        description: 商品カテゴリ名 (ポルトガル語)。主キー。
+        data_tests:
+          - unique
+          - not_null
+      - name: product_category_name_english
+        description: 商品カテゴリ名 (英語)。
+        data_tests:
+          - unique
+          - not_null
