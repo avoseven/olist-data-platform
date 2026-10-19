@@ -1,0 +1,6 @@
+# dbt のパッケージ。`dbt deps` で dbt_packages/ にダウンロードする。
+
+packages:
+  # 複合キーの一意性テスト (unique_combination_of_columns) などに使う
+  - package: dbt-labs/dbt_utils
+    version: [">=1.3.0", "<2.0.0"]

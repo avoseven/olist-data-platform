@@ -93,3 +93,54 @@ models:
           - accepted_values:
               arguments:
                 values: [AC, AL, AM, AP, BA, CE, DF, ES, GO, MA, MG, MS, MT, PA, PB, PE, PI, PR, RJ, RN, RO, RR, RS, SC, SE, SP, TO]
+
+  - name: stg_order_items
+    description: 1 行 = 注文の明細 1 行。数量の列はなく、同じ商品を複数個買うと明細が複数行になる。
+    data_tests:
+      # 主キーは (order_id, order_item_id) の複合キー
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [order_id, order_item_id]
+    columns:
+      - name: order_id
+        description: 注文 ID。
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_orders')
+                field: order_id
+      - name: order_item_id
+        description: 注文の中での明細番号 (1 から始まる連番)。
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+      - name: product_id
+        description: 商品 ID。
+        data_tests:
+          - not_null
+      - name: seller_id
+        description: 販売者 ID。sellers テーブルは取り込んでいないため、結合先はない (ADR 001)。
+        data_tests:
+          - not_null
+      - name: shipping_limit_at
+        description: 販売者が配送業者に引き渡す期限 (タイムゾーンなし)。購入から約 3 年後になっている不整合な値が 4 行ある。
+        data_tests:
+          - not_null
+      - name: price
+        description: 商品の価格 (ブラジルレアル)。
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+      - name: freight_value
+        description: 明細ごとの送料 (ブラジルレアル)。送料無料の明細は 0。
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0

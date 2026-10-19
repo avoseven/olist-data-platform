@@ -77,6 +77,10 @@ erDiagram
 ### 注文
 
 - `order_status` の内訳: `delivered` 96,478 / `shipped` 1,107 / `canceled` 625 / `unavailable` 609 / `invoiced` 314 / `processing` 301 / `created` 5 / `approved` 2
+- **`order_items` に数量の列はない。** 同じ商品を複数個買うと明細が複数行になる (明細が 2 行以上ある注文 9,803 件のうち 6,567 件は同じ商品の繰り返し)。注文の金額は `price` の合計、個数は行数で数える。
+- `order_items.order_item_id` は、すべての注文で 1 から欠番なく連番になっている。
+- 金額 (`price`, `freight_value`) は小数点以下 2 桁まで。送料が 0 の明細が 383 行ある。
+- 発送期限 (`shipping_limit_date`) が購入から約 3 年後 (2020 年) になっている不整合な値が 3 注文 (4 行) ある。
 - **明細 (`order_items`) が 1 件もない注文が 775 件ある。** 大半は `unavailable` (603 件) と `canceled` (164 件)。
 - 配送日時は未配送の注文で欠損する (`order_delivered_customer_date` の欠損は 2,965 件)。
 - **配達済み (`delivered`) なのに日時が欠損している注文がある。** 承認日時 14 件、発送日時 2 件、配達日時 8 件。
