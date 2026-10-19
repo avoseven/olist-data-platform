@@ -70,7 +70,7 @@ staging の作成までに、「mart で決める」として先送りしてき�
 |---|---|
 | `items_amount` | 明細の価格 (`price`) の合計。**購入金額**として使う |
 | `freight_amount` | 明細の送料 (`freight_value`) の合計 |
-| `total_amount` | `items_amount` と `freight_amount` の合計 (顧客が支払うべき総額) |
+| `total_amount` | `items_amount` と `freight_amount` の合計 (明細ベースの商品価格 + 送料)。支払いの合計とは一致しない注文がある |
 
 支払い (`order_payments`) のデータは金額の計算には使わず、支払い方法や分割回数など、支払いの行動に関する特徴量に使う。
 
