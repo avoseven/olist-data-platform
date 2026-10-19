@@ -60,10 +60,11 @@ erDiagram
 - **日時の列は文字列として格納されている。** 日時型への変換が必要。
   - 形式は `YYYY-MM-DD HH:MM:SS` で統一されている。
   - **タイムゾーンの情報がない。** BigQuery では `TIMESTAMP` (UTC の絶対時刻) ではなく `DATETIME` に変換する。
-  - `order_estimated_delivery_date` は時刻が常に 00:00:00 で、実質的には日付。
+    - ブラジルの現地時刻 (夏時間あり) で記録されていると考えられる。`review_creation_date` は通常 00:00:00 だが、夏時間が始まった日 (2016-10-16、2017-10-15) だけ 01:00:00 になっている (その日は 0:00 が存在しないため)。
+  - `order_estimated_delivery_date` は時刻が常に 00:00:00、`review_creation_date` は 00:00:00 または夏時間開始日の 01:00:00 のみで、どちらも実質的には日付。
   - `orders`: `order_purchase_timestamp`, `order_approved_at`, `order_delivered_carrier_date`, `order_delivered_customer_date`, `order_estimated_delivery_date`
   - `order_items`: `shipping_limit_date`
-  - `order_reviews`: `review_creation_date` (時刻は常に 00:00:00), `review_answer_timestamp`
+  - `order_reviews`: `review_creation_date`, `review_answer_timestamp`
 - `products` の `product_name_lenght` / `product_description_lenght` は元データのスペルミス (`length` ではない)。
 - **`order_reviews` のレビュー本文には、引用符で囲まれた改行が含まれる。** ファイルの行数 (104,719 行) とレコード数 (99,224 件) が一致しない。BigQuery に読み込むときは `allow_quoted_newlines` が必要。
 - **`product_category_name_translation.csv` だけ、先頭に BOM がある。** UTF-8 として読むと最初の列名に BOM が混ざるため、`utf-8-sig` で読む。
@@ -98,6 +99,8 @@ erDiagram
 - **レビューを使うときは、分析の単位に応じて重複を除く・集約する必要がある。** 方針はまだ決めておらず、分析の単位や特徴量の設計に合わせて決める。
 - レビュー作成日が購入日より前という、時系列が矛盾した行が 64 行ある (うち 57 行はキャンセルされた注文)。
 - コメントは任意入力のため、`review_comment_title` (87,656 件) と `review_comment_message` (58,247 件) は欠損が多い。
+  - 前後に空白があるコメント (本文 9,451 行、タイトル 1,998 行) や、空白だけのコメント (本文 27 行、タイトル 2 行) がある。staging では空白を除き、空白だけのものは NULL にしている。
+- レビューへの回答日時が、アンケートを送った日より前になっているものはない。
 
 ### 商品・地理
 
