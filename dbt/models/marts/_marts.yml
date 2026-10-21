@@ -1,0 +1,95 @@
+# mart モデルの説明とテスト
+# 定義は docs/customer_features.md を参照
+
+version: 2
+
+models:
+  - name: fct_delivered_orders
+    description: >-
+      1 行 = 1 注文 (delivered の注文のみ)。
+      明細・支払い・レビューをそれぞれ注文単位に集約してから結合したもの。
+      顧客単位の特徴量 (customer_features) の集計の基準になる。
+    columns:
+      - name: order_id
+        description: 注文 ID。主キー。
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_unique_id
+        description: 人を識別する ID。
+        data_tests:
+          - not_null
+      - name: customer_state
+        description: その注文に紐づく顧客情報の州。
+        data_tests:
+          - not_null
+      - name: order_purchased_at
+        description: 購入日時 (タイムゾーンなし)。
+        data_tests:
+          - not_null
+      - name: order_purchase_date
+        description: 購入日。
+        data_tests:
+          - not_null
+      - name: item_count
+        description: 明細の行数 (商品の個数)。
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+      - name: items_amount
+        description: 明細の価格の合計 (購入金額)。
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+      - name: freight_amount
+        description: 明細の送料の合計。
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: total_amount
+        description: items_amount と freight_amount の合計 (明細ベースの商品価格 + 送料)。支払いの合計とは一致しない注文がある。
+        data_tests:
+          - not_null
+      - name: has_credit_card_payment
+        description: カードの支払いがあれば TRUE、なければ FALSE。支払いのレコードがない注文は NULL。
+        data_tests:
+          # 支払いのレコードがない注文が 1 件ある (docs/data_notes.md)
+          - not_null:
+              config:
+                severity: warn
+      - name: max_card_installments
+        description: 分割回数が 1 以上のカード払いの最大の分割回数。対象がなければ NULL。
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+      - name: has_voucher_payment
+        description: 金額が正のバウチャーの支払いがあれば TRUE、なければ FALSE。支払いのレコードがない注文は NULL。
+      - name: review_id
+        description: 採用したレビューの ID (ADR 006 の C)。レビューがなければ NULL。
+      - name: review_score
+        description: 採用したレビューのスコア。レビューがなければ NULL。
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5]
+                quote: false
+      - name: has_review_comment
+        description: 採用したレビューにコメント (タイトルか本文) があれば TRUE、なければ FALSE。レビューがなければ NULL。
+      - name: delivery_days
+        description: 配達日 − 購入日 (日数)。配達日時がない注文は NULL。
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: delivery_delay_days
+        description: 配達日 − 配送予定日 (日数)。プラスなら遅れ、マイナスなら予定より早い。配達日時がない注文は NULL。
+      - name: is_late_delivery
+        description: 配達日が配送予定日より後なら TRUE、当日以前なら FALSE。配達日時がない注文は NULL。
