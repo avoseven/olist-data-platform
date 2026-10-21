@@ -239,6 +239,56 @@
 - **NULL**: ならない (staging の非欠損テストを前提とする)
 - **補足**: 複数の州で注文した顧客は 37 人。最後の購入日時が同じ注文を複数持つ顧客は 246 人いるが、それらの注文で州が違う顧客はいない
 
+## 実装の構成
+
+### 入力
+
+`customer_features` は、次の 3 つの集計から計算する (ADR 007 の原則 1)。
+
+| 入力 | 粒度 | 置き場所 | 使う特徴量 |
+|---|---|---|---|
+| `fct_delivered_orders` | 1 行 = 1 注文 (delivered のみ) | 独立したモデル (mart) | 下の 2 つ以外のすべて |
+| 顧客 × カテゴリの集計 | 1 行 = 顧客 × カテゴリ | `customer_features` の CTE | `top_category`, `distinct_category_count` |
+| 顧客 × 支払い方法の集計 | 1 行 = 顧客 × 支払い方法 | `customer_features` の CTE | `main_payment_type` |
+
+2 つの集計を独立したモデル (中間層) にせず CTE にするのは、現時点では `customer_features` でしか使わないためである。
+[ADR 002](decisions/002_layer_architecture.md) の「複数の mart で同じ中間処理を使い回すようになったら中間層を追加する」という方針を維持する。
+別のモデルからも使うようになった段階で、中間モデルにすることを再検討する。
+
+CTE は単独のモデルとしてテストできないため、次の検証を用意する。
+
+| 検証の対象 | 確認すること |
+|---|---|
+| 顧客 × カテゴリの粒度 | 同じ顧客・カテゴリの組み合わせが複数行にならない |
+| 顧客 × 支払い方法の粒度 | 同じ顧客・支払い方法の組み合わせが複数行にならない |
+| `top_category` | 顧客ごとにカテゴリ別の集計を再計算し、定義した選択基準の結果と一致する |
+| `main_payment_type` | 顧客ごとに支払い方法別の集計を再計算し、定義した選択基準の結果と一致する |
+
+### `fct_delivered_orders` の列
+
+| 種類 | 列 | 定義 | 使う特徴量 |
+|---|---|---|---|
+| キー | `order_id` | 注文 ID (主キー) | - |
+| キー | `customer_unique_id` | 人を識別する ID | 顧客単位への集約 |
+| 属性 | `customer_state` | その注文に紐づく顧客情報の州 | `customer_state` |
+| 属性 | `order_purchased_at` | 購入日時 | `customer_state` (最後の注文の決定) |
+| 属性 | `order_purchase_date` | 購入日 | 最終購入日・最初の購入日、基準日、配送日数 |
+| 明細 | `item_count` | 明細の行数 | `item_count`, `avg_item_price` |
+| 明細 | `items_amount` | 価格の合計 | 金額の特徴量 |
+| 明細 | `freight_amount` | 送料の合計 | `freight_ratio` |
+| 明細 | `total_amount` | `items_amount` + `freight_amount` | `freight_ratio` |
+| 支払い | `has_credit_card_payment` | カードの支払いがあれば TRUE、なければ FALSE。支払いのレコードがなければ NULL | `credit_card_order_ratio` |
+| 支払い | `max_card_installments` | 分割回数が 1 以上のカード払いの最大の分割回数。対象がなければ NULL | `avg_card_installments` |
+| 支払い | `has_voucher_payment` | 金額が正のバウチャーの支払いがあれば TRUE、なければ FALSE。支払いのレコードがなければ NULL | `has_used_voucher` |
+| レビュー | `review_id` | 採用したレビューの ID。なければ NULL | `avg_review_score` (重複の除去) |
+| レビュー | `review_score` | 採用したレビューのスコア。なければ NULL | `avg_review_score` |
+| レビュー | `has_review_comment` | 採用したレビューにコメントがあれば TRUE、なければ FALSE。レビューがなければ NULL | `has_review_comment` |
+| 配送 | `delivery_days` | 配達日 − 購入日。配達日時がなければ NULL | `avg_delivery_days` |
+| 配送 | `delivery_delay_days` | 配達日 − 配送予定日 (プラスなら遅れ)。配達日時がなければ NULL | `avg_delivery_delay_days` |
+| 配送 | `is_late_delivery` | 配達日が配送予定日より後なら TRUE、当日以前なら FALSE。配達日時がなければ NULL | `late_delivery_ratio` |
+
+明細・支払い・レビューは、それぞれ注文単位に集約してから結合する (ADR 006)。
+
 ## 見送った候補
 
 | 候補 | 見送った理由 |
