@@ -255,14 +255,15 @@
 [ADR 002](decisions/002_layer_architecture.md) の「複数の mart で同じ中間処理を使い回すようになったら中間層を追加する」という方針を維持する。
 別のモデルからも使うようになった段階で、中間モデルにすることを再検討する。
 
-CTE は単独のモデルとしてテストできないため、次の検証を用意する。
+CTE は単独のモデルとしてテストできないため、次のように検証する。
 
-| 検証の対象 | 確認すること |
+| 検証の対象 | 検証の方法 |
 |---|---|
-| 顧客 × カテゴリの粒度 | 同じ顧客・カテゴリの組み合わせが複数行にならない |
-| 顧客 × 支払い方法の粒度 | 同じ顧客・支払い方法の組み合わせが複数行にならない |
-| `top_category` | 顧客ごとにカテゴリ別の集計を再計算し、定義した選択基準の結果と一致する |
-| `main_payment_type` | 顧客ごとに支払い方法別の集計を再計算し、定義した選択基準の結果と一致する |
+| 顧客 × カテゴリの粒度 | CTE を `GROUP BY 顧客, カテゴリ` で集計しているため、組み合わせごとに 1 行になることは SQL の構造上保証される。同じ集計をテストで書いても独立した検証にならないため、個別のテストは設けない |
+| 顧客 × 支払い方法の粒度 | 同上 (`GROUP BY 顧客, 支払い方法`) |
+| 粒度の誤りによる値の重複 | 顧客数・注文数・購入金額を `fct_delivered_orders` と突き合わせる (`assert_customer_features_matches_fct`) |
+| `top_category`, `distinct_category_count` | staging から、モデルとは別の書き方 (`row_number`) で再計算し、一致することを確かめる (`assert_top_category_matches_recomputation`) |
+| `main_payment_type` | 同上 (`assert_main_payment_type_matches_recomputation`) |
 
 ### `fct_delivered_orders` の列
 

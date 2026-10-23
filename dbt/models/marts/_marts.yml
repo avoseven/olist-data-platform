@@ -93,3 +93,133 @@ models:
         description: 配達日 − 配送予定日 (日数)。プラスなら遅れ、マイナスなら予定より早い。配達日時がない注文は NULL。
       - name: is_late_delivery
         description: 配達日が配送予定日より後なら TRUE、当日以前なら FALSE。配達日時がない注文は NULL。
+
+  - name: customer_features
+    description: >-
+      1 行 = 1 人 (customer_unique_id)。delivered の注文を 1 件以上持つ顧客のみ。
+      顧客セグメンテーションの入力になる特徴量。定義は docs/customer_features.md を参照。
+    data_tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "days_since_first_purchase >= days_since_last_purchase"
+      # freight_ratio は 0 以上 1 未満。accepted_range の inclusive は上限と下限の両方に効くため、上限は別に検証する
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "freight_ratio < 1"
+    columns:
+      - name: customer_unique_id
+        description: 人を識別する ID。主キー。
+        data_tests:
+          - unique
+          - not_null
+      - name: reference_date
+        description: 基準日 (delivered の注文の最後の購入日)。日数の特徴量の基準。
+        data_tests:
+          - not_null
+      - name: total_items_amount
+        description: 購入金額 (明細の価格) の合計。
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+      - name: avg_order_items_amount
+        description: 1 注文あたりの購入金額 (注文ごとの値の平均)。
+        data_tests:
+          - not_null
+      - name: avg_item_price
+        description: 商品 1 個あたりの価格 (購入金額の合計 ÷ 個数の合計)。
+        data_tests:
+          - not_null
+      - name: freight_ratio
+        description: 送料の合計 ÷ (価格 + 送料) の合計。0 以上 1 未満。
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+                inclusive: true
+      - name: order_count
+        description: delivered の注文の数。
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+      - name: days_since_last_purchase
+        description: 基準日 − 最後の注文の購入日 (日数)。
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: days_since_first_purchase
+        description: 基準日 − 最初の注文の購入日 (日数)。
+        data_tests:
+          - not_null
+      - name: item_count
+        description: 購入した商品の個数 (明細の行数の合計)。
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+      - name: distinct_category_count
+        description: カテゴリがわかる商品のカテゴリの種類の数。カテゴリがわかる商品がなければ NULL。
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+      - name: top_category
+        description: 主に買うカテゴリ (英語名、なければポルトガル語名)。注文の数 → 価格の合計 → ポルトガル語名の辞書順で決める。
+      - name: credit_card_order_ratio
+        description: カードを使った注文の割合。有効な支払いの記録がなければ NULL。
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: avg_card_installments
+        description: カードを使った注文での、最大の分割回数の平均。カードを使っていなければ NULL。
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+      - name: has_used_voucher
+        description: 金額が正のバウチャーで支払ったことがあるか。有効な支払いの記録がなければ NULL。
+      - name: main_payment_type
+        description: 主に使う支払い方法。注文の数 → 金額の合計 → 名前の辞書順で決める。
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [credit_card, boleto, voucher, debit_card, not_defined]
+      - name: avg_review_score
+        description: レビューのスコアの平均 (review_id の重複を除く)。採用したレビューがなければ NULL。
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+                max_value: 5
+      - name: has_review_comment
+        description: 採用したレビューにコメントを書いたことがあるか。採用したレビューがなければ NULL。
+      - name: avg_delivery_days
+        description: 購入から配達までの日数の平均。配達日時がある注文がなければ NULL。
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: avg_delivery_delay_days
+        description: 配達日 − 配送予定日の平均 (プラスなら遅れ)。配達日時がある注文がなければ NULL。
+      - name: late_delivery_ratio
+        description: 予定日より遅れて届いた注文の割合。配達日時がある注文がなければ NULL。
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: customer_state
+        description: 最後の delivered の注文に紐づく顧客情報の州。
+        data_tests:
+          - not_null
