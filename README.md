@@ -23,7 +23,7 @@ Olist の CSV (手元の PC)
              │  dbt で加工する
              ▼
 ┌──────────────────────────┐
-│ mart     (olist_mart)    │  分析の目的に合わせて結合・集計した層 (作成予定)
+│ mart     (olist_mart)    │  分析の目的に合わせて結合・集計した層
 └────────────┬─────────────┘
              ▼
       顧客セグメンテーション
@@ -69,6 +69,7 @@ olist-data-platform/
 │   └── load_raw.py             CSV を BigQuery に読み込む
 ├── dbt/               dbt のプロジェクト (BigQuery 上の加工処理)
 │   ├── models/staging/         staging 層の SQL と、その説明・テスト
+│   ├── models/marts/           mart 層の SQL と、その説明・テスト
 │   ├── tests/                  複数のテーブルにまたがるテスト
 │   ├── macros/                 dbt の動きを調整する部品
 │   ├── dbt_project.yml         dbt プロジェクトの設定
@@ -208,7 +209,7 @@ CSV の件数と BigQuery の件数を比べて、すべて `OK` と表示され
 
 何度実行しても、テーブルが上書きされるだけなので問題ありません。
 
-### 2. dbt で加工する (staging 層)
+### 2. dbt で加工する (staging 層・mart 層)
 
 **dbt のコマンドは、`dbt` フォルダの中で実行します。**
 
@@ -222,11 +223,18 @@ uv run dbt build
 1. **モデルを作る**: `models/` の SQL を BigQuery で実行し、ビューやテーブルを作ります。
 2. **テストする**: データがルール通りか (ID が重複していないか、など) を確認します。
 
+staging の 7 つのビューと、mart の次の 2 つのテーブルが作られます。
+
+| テーブル | 1 行が表すもの | 内容 |
+|---|---|---|
+| `olist_mart.fct_delivered_orders` | 1 注文 (配達済みのみ) | 注文の金額・支払い・配送・レビューをまとめたもの |
+| `olist_mart.customer_features` | 1 人の顧客 | 顧客セグメンテーションに使う特徴量 ([docs/customer_features.md](docs/customer_features.md)) |
+
 最後に次のような表示が出れば成功です。
 
 ```
-Processed: 7 models | 67 tests
-Summary: 74 total | 62 success | 12 warn
+Processed: 9 models | 115 tests
+Summary: 124 total | 111 success | 13 warn
 ```
 
 > **`warn` (警告) が出ても問題ありません。**
