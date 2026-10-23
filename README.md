@@ -233,8 +233,8 @@ staging の 7 つのビューと、mart の次の 2 つのテーブルが作ら�
 最後に次のような表示が出れば成功です。
 
 ```
-Processed: 9 models | 115 tests
-Summary: 124 total | 111 success | 13 warn
+Processed: 9 models | 118 tests
+Summary: 127 total | 112 success | 15 warn
 ```
 
 > **`warn` (警告) が出ても問題ありません。**

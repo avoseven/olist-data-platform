@@ -5,6 +5,29 @@ version: 2
 models:
   - name: stg_orders
     description: 1 行 = 1 注文。
+    data_tests:
+      # 日時の順序 (購入 → 承認 → 発送 → 配達) の逆転を検知する (ADR 006 の E)。
+      # 欠損している日時とは順序を比べられないため、2 つの日時がどちらも存在する行だけを対象にする
+      # (欠損は、列ごとの非欠損テストで検知する)。
+      # 元データには逆転している注文があり (docs/data_notes.md)、値は修正しないため警告にする。
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "order_approved_at >= order_purchased_at"
+          config:
+            where: "order_approved_at is not null"
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "order_delivered_carrier_at >= order_approved_at"
+          config:
+            where: "order_approved_at is not null and order_delivered_carrier_at is not null"
+            severity: warn
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "order_delivered_customer_at >= order_delivered_carrier_at"
+          config:
+            where: "order_delivered_carrier_at is not null and order_delivered_customer_at is not null"
+            severity: warn
     columns:
       - name: order_id
         description: 注文 ID。主キー。
