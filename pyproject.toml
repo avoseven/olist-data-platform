@@ -6,11 +6,12 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "dbt>=2.0.8",
-    "google-cloud-bigquery>=3.46.1",
+    "google-cloud-bigquery[pandas]>=3.46.1",
     "pandas>=3.0.6",
 ]
 
 [dependency-groups]
 dev = [
     "ipykernel>=7.4.0",
+    "matplotlib>=3.11.2",
 ]
