@@ -228,7 +228,7 @@ staging の 7 つのビューと、mart の次の 2 つのテーブルが作ら�
 | テーブル | 1 行が表すもの | 内容 |
 |---|---|---|
 | `olist_mart.fct_delivered_orders` | 1 注文 (配達済みのみ) | 注文の金額・支払い・配送・レビューをまとめたもの |
-| `olist_mart.customer_features` | 1 人の顧客 | 顧客セグメンテーションに使う特徴量 ([docs/customer_features.md](docs/customer_features.md)) |
+| `olist_mart.customer_features` | 1 人の顧客 | 顧客セグメンテーションに使う特徴量 ([docs/customer_features.md](docs/customer_features.md))。日数の特徴量は、データの観測期間の終わり (基準日 2018-08-29) 時点の値 |
 
 最後に次のような表示が出れば成功です。
 
@@ -286,8 +286,11 @@ uv run dbt show --inline "select count(*) from {{ ref('stg_orders') }}"
 
 ## ドキュメント
 
+ドキュメントの一覧は [docs/README.md](docs/README.md) にまとめています。主なものは次のとおりです。
+
 | ファイル | 内容 |
 |---|---|
 | [docs/data_notes.md](docs/data_notes.md) | データの仕様と注意点 (テーブルの粒度、主キー、欠損、不整合など) |
+| [docs/customer_features.md](docs/customer_features.md) | 顧客特徴量の定義と、クラスタリングへの採用状況 |
 | [docs/decisions/](docs/decisions/) | 設計の判断の記録 (ADR)。何を、何と比べて、なぜ決めたか |
-| [notebooks/01_order_reviews_duplicates.ipynb](notebooks/01_order_reviews_duplicates.ipynb) | レビューの重複についての調査 |
+| [notebooks/](notebooks/) | 調査・分析の notebook (レビューの重複の調査、特徴量の選定) |

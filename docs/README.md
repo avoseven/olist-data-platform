@@ -22,9 +22,11 @@
 | [005](decisions/005_dbt_v2.md) | dbt v2 の標準版を使う |
 | [006](decisions/006_mart_design.md) | mart の設計方針 (対象の注文、金額、レビュー、基準日、不整合、テーブル名) |
 | [007](decisions/007_customer_feature_principles.md) | 顧客単位の特徴量の設計原則 (集約の単位、平均の取り方、NULL、代表値) |
+| [008](decisions/008_feature_selection.md) | クラスタリングに使う特徴量を 8 つ選ぶ (採用・保留・不採用と、次の段階で確認すること) |
 
 ## 調査
 
 | ファイル | 内容 |
 |---|---|
 | [../notebooks/01_order_reviews_duplicates.ipynb](../notebooks/01_order_reviews_duplicates.ipynb) | `order_reviews` の 2 種類の重複についての調査 |
+| [../notebooks/02_feature_selection.ipynb](../notebooks/02_feature_selection.ipynb) | 特徴量の NULL・分布・相関の確認と、クラスタリングに使う特徴量の選定 |

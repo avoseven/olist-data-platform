@@ -56,6 +56,18 @@
 
 `avg_delivery_delay_days` と `late_delivery_ratio` は、同じ配送の実績を違う方法で要約した比較候補であり、データ確認の後にどちらか一方を選ぶ。
 
+## クラスタリングへの採用
+
+データ確認の結果、K-means に入力する特徴量を次のとおり決めた。理由は [ADR 008](decisions/008_feature_selection.md) を参照。
+不採用の特徴量も、クラスタの解釈や見直しに使うため、`customer_features` の列としては残す。
+
+| 採用状況 | 特徴量 |
+|---|---|
+| 採用 | `total_items_amount` (対数変換), `order_count`, `days_since_last_purchase`, `item_count`, `credit_card_order_ratio`, `avg_review_score`, `has_review_comment`, `late_delivery_ratio` |
+| 保留 | `avg_card_installments` |
+| 不採用 | `avg_order_items_amount`, `avg_item_price`, `freight_ratio`, `days_since_first_purchase`, `distinct_category_count`, `has_used_voucher`, `avg_delivery_days`, `avg_delivery_delay_days` |
+| 解釈用 (区分④) | `top_category`, `main_payment_type`, `customer_state` |
+
 ## 定義
 
 ### 金額
@@ -108,7 +120,9 @@
 - **意味**: 最後に購入してから何日経っているか
 - **定義**: `reference_date` − 最後の注文の購入日 (日付どうしの差)
 - **NULL**: ならない
-- **備考**: データの最後の 1 週間ほどは不完全なため、0〜数日の顧客は実際より少なく見えている可能性がある (ADR 006 の D)
+- **備考**:
+  - 現在の顧客の状況ではなく、データの観測期間の終わり (基準日 2018-08-29) 時点での最近性を表す
+  - データの最後の 1 週間ほどは不完全なため、0〜数日の顧客は実際より少なく見えている可能性がある (ADR 006 の D)
 
 #### `days_since_first_purchase`
 
