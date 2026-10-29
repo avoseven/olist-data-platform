@@ -23,6 +23,7 @@
 | [006](decisions/006_mart_design.md) | mart の設計方針 (対象の注文、金額、レビュー、基準日、不整合、テーブル名) |
 | [007](decisions/007_customer_feature_principles.md) | 顧客単位の特徴量の設計原則 (集約の単位、平均の取り方、NULL、代表値) |
 | [008](decisions/008_feature_selection.md) | クラスタリングに使う特徴量を 8 つ選ぶ (採用・保留・不採用と、次の段階で確認すること) |
+| [009](decisions/009_clustering_preprocessing.md) | クラスタリングの前処理 (NULL がある顧客は学習から外す、金額と件数は対数変換してから標準化) |
 
 ## 調査
 
