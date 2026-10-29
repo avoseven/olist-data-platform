@@ -33,3 +33,4 @@
 | [../notebooks/01_order_reviews_duplicates.ipynb](../notebooks/01_order_reviews_duplicates.ipynb) | `order_reviews` の 2 種類の重複についての調査 |
 | [../notebooks/02_feature_selection.ipynb](../notebooks/02_feature_selection.ipynb) | 特徴量の NULL・分布・相関の確認と、クラスタリングに使う特徴量の選定 |
 | [../notebooks/03_clustering.ipynb](../notebooks/03_clustering.ipynb) | K-means の基準となる結果 (クラスタ数ごとの評価と、何で顧客が分かれたかの確認) |
+| [../notebooks/04_clustering_after_flags.ipynb](../notebooks/04_clustering_after_flags.ipynb) | リピーターと遅延経験者をフラグで分けたあとの顧客のクラスタリング (金額・最近性、＋レビュー) |
