@@ -24,7 +24,8 @@
 | [007](decisions/007_customer_feature_principles.md) | 顧客単位の特徴量の設計原則 (集約の単位、平均の取り方、NULL、代表値) |
 | [008](decisions/008_feature_selection.md) | クラスタリングに使う特徴量を 8 つ選ぶ (採用・保留・不採用と、次の段階で確認すること。入力する特徴量は 010 で置き換え) |
 | [009](decisions/009_clustering_preprocessing.md) | クラスタリングの前処理 (NULL がある顧客は学習から外す、金額と件数は対数変換してから標準化) |
-| [010](decisions/010_rule_flags_and_clustering_scope.md) | リピーターと遅延経験者はフラグで分け、それ以外の顧客を金額・最近性 (・レビュー) でクラスタリングする |
+| [010](decisions/010_rule_flags_and_clustering_scope.md) | リピーターと遅延経験者はフラグで分け、それ以外の顧客を金額・最近性 (・レビュー) でクラスタリングする (一部を 011 で置き換え) |
+| [011](decisions/011_segmentation_purpose_and_roles.md) | セグメンテーションの目的 (購買傾向と購入体験の理解、改善機会の探索) と、分類に使う指標・比べる指標の分担 |
 
 ## 調査
 
