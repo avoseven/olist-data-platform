@@ -68,6 +68,9 @@
 | 不採用 | `avg_order_items_amount`, `avg_item_price`, `freight_ratio`, `days_since_first_purchase`, `distinct_category_count`, `has_used_voucher`, `avg_delivery_days`, `avg_delivery_delay_days` |
 | 解釈用 (区分④) | `top_category`, `main_payment_type`, `customer_state` |
 
+> その後、K-means の結果から、最終的なセグメントはクラスタリングではなくルールで作ることにした ([ADR 010](decisions/010_rule_flags_and_clustering_scope.md)・[011](decisions/011_segmentation_purpose_and_roles.md))。
+> セグメントの分類には `order_count` と `total_items_amount` だけを使い、ほかの特徴量はセグメントどうしの比較や解釈に使う ([ADR 012](decisions/012_segment_definition.md))。
+
 ## 定義
 
 ### 金額
