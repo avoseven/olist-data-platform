@@ -37,3 +37,4 @@
 | [../notebooks/03_clustering.ipynb](../notebooks/03_clustering.ipynb) | K-means の基準となる結果 (クラスタ数ごとの評価と、何で顧客が分かれたかの確認) |
 | [../notebooks/04_clustering_after_flags.ipynb](../notebooks/04_clustering_after_flags.ipynb) | リピーターと遅延経験者をフラグで分けたあとの顧客のクラスタリング (金額・最近性、＋レビュー) |
 | [../notebooks/05_segmentation.ipynb](../notebooks/05_segmentation.ipynb) | 単発購入の顧客の金額の区切り方の比較と、セグメントの割り当て |
+| [../notebooks/06_segment_analysis.ipynb](../notebooks/06_segment_analysis.ipynb) | セグメント別の購入体験の分析 (顧客単位・注文単位・購入時期をそろえた比較と、事実・解釈・施策の仮説) |
