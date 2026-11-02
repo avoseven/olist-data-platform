@@ -37,6 +37,8 @@
 | 金額 | [`avg_item_price`](#avg_item_price) | ② | NUMERIC | 0 |
 | 金額 | [`freight_ratio`](#freight_ratio) | ③ | NUMERIC | 0 |
 | 時期 | [`order_count`](#order_count) | ① | INT64 | 0 |
+| 時期 | [`purchase_day_count`](#purchase_day_count-と-is_repeat_customer) | - | INT64 | 0 |
+| 時期 | [`is_repeat_customer`](#purchase_day_count-と-is_repeat_customer) | - | BOOL | 0 |
 | 時期 | [`days_since_last_purchase`](#days_since_last_purchase) | ① | INT64 | 0 |
 | 時期 | [`days_since_first_purchase`](#days_since_first_purchase) | ③ | INT64 | 0 |
 | 商品 | [`item_count`](#item_count) | ② | INT64 | 0 |
@@ -53,6 +55,8 @@
 | 体験 | [`late_delivery_ratio`](#avg_delivery_delay_days-と-late_delivery_ratio) | ③ | FLOAT64 | 8 |
 | 地域 | [`customer_state`](#customer_state) | ④ | STRING | 0 |
 | - | `reference_date` | - | DATE | 0 |
+
+`purchase_day_count` と `is_repeat_customer` は、セグメンテーションのために後から追加した列で、区分の対象外 ([ADR 013](decisions/013_repeat_customer_definition.md))。
 
 `avg_delivery_delay_days` と `late_delivery_ratio` は、同じ配送の実績を違う方法で要約した比較候補であり、データ確認の後にどちらか一方を選ぶ。
 
@@ -113,10 +117,25 @@
 
 #### `order_count`
 
-- **意味**: 購入回数
+- **意味**: 注文の数
 - **定義**: delivered の注文の数
 - **NULL**: ならない (対象の顧客は全員 1 以上)
-- **備考**: 約 97% の顧客が 1。リピーターを捉えるために残す
+- **備考**: 約 97% の顧客が 1。リピーターを捉えるために残す。1 回の買い物が出品者ごとなどに分かれ、同じ日に複数の注文になることがあるため、「何回買いに来たか」は [`purchase_day_count`](#purchase_day_count-と-is_repeat_customer) で表す
+
+#### `purchase_day_count` と `is_repeat_customer`
+
+- **意味**: 何日に分けて購入したか / リピーターかどうか
+- **定義**:
+  - `purchase_day_count`: delivered の注文がある、異なる購入日の数。同じ日の複数の注文は 1 日として数える
+  - `is_repeat_customer`: `purchase_day_count >= 2`
+- **NULL**: ならない
+- **備考**: `order_count` が 2 以上の顧客 2,801 人のうち 786 人は、すべての注文が同じ日 (多くは数秒以内) で、`is_repeat_customer` は FALSE になる。経緯は [ADR 013](decisions/013_repeat_customer_definition.md)
+
+| 顧客の例 | `order_count` | `purchase_day_count` | `is_repeat_customer` |
+|---|---:|---:|---|
+| 同じ日に 3 つの注文 | 3 | 1 | FALSE |
+| 別の日に 1 つずつ注文 | 2 | 2 | TRUE |
+| 3 日に分けて 5 つの注文 | 5 | 3 | TRUE |
 
 #### `days_since_last_purchase`
 
@@ -281,6 +300,7 @@ CTE は単独のモデルとしてテストできないため、次のように�
 | 粒度の誤りによる値の重複 | 顧客数・注文数・購入金額を `fct_delivered_orders` と突き合わせる (`assert_customer_features_matches_fct`) |
 | `top_category`, `distinct_category_count` | staging から、モデルとは別の書き方 (`row_number`) で再計算し、一致することを確かめる (`assert_top_category_matches_recomputation`) |
 | `main_payment_type` | 同上 (`assert_main_payment_type_matches_recomputation`) |
+| `purchase_day_count` | staging から、モデルとは別の書き方 (顧客と購入日の組を先に重複なしで作ってから数える) で再計算し、一致することを確かめる (`assert_purchase_day_count_matches_recomputation`)。あわせて `purchase_day_count <= order_count` と、`is_repeat_customer` が `purchase_day_count >= 2` と一致することをテストする |
 
 ### `fct_delivered_orders` の列
 
@@ -290,7 +310,7 @@ CTE は単独のモデルとしてテストできないため、次のように�
 | キー | `customer_unique_id` | 人を識別する ID | 顧客単位への集約 |
 | 属性 | `customer_state` | その注文に紐づく顧客情報の州 | `customer_state` |
 | 属性 | `order_purchased_at` | 購入日時 | `customer_state` (最後の注文の決定) |
-| 属性 | `order_purchase_date` | 購入日 | 最終購入日・最初の購入日、基準日、配送日数 |
+| 属性 | `order_purchase_date` | 購入日 | 最終購入日・最初の購入日、基準日、配送日数、`purchase_day_count` |
 | 明細 | `item_count` | 明細の行数 | `item_count`, `avg_item_price` |
 | 明細 | `items_amount` | 価格の合計 | 金額の特徴量 |
 | 明細 | `freight_amount` | 送料の合計 | `freight_ratio` |

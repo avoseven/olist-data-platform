@@ -127,6 +127,8 @@ order_features as (
     select
         customer_unique_id,
         count(*) as order_count,
+        -- 同じ日の注文 (1 回の買い物が出品者ごとなどに分かれたもの) は 1 日として数える (ADR 013)
+        count(distinct order_purchase_date) as purchase_day_count,
         sum(item_count) as item_count,
         sum(items_amount) as total_items_amount,
         -- 注文ごとの値の平均 (原則 2)
@@ -166,6 +168,8 @@ final as (
         order_features.freight_ratio,
         -- 時期
         order_features.order_count,
+        order_features.purchase_day_count,
+        order_features.purchase_day_count >= 2 as is_repeat_customer,
         -- 商品
         order_features.item_count,
         category_features.distinct_category_count,

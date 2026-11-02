@@ -106,6 +106,14 @@ models:
       - dbt_utils.expression_is_true:
           arguments:
             expression: "freight_ratio < 1"
+      # 購入日数は注文数を超えない (ADR 013)
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "purchase_day_count <= order_count"
+      # リピーターの判定が、購入日数の定義と一致する (ADR 013)
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "is_repeat_customer = (purchase_day_count >= 2)"
     columns:
       - name: customer_unique_id
         description: 人を識別する ID。主キー。
@@ -148,6 +156,17 @@ models:
           - dbt_utils.accepted_range:
               arguments:
                 min_value: 1
+      - name: purchase_day_count
+        description: delivered の注文がある、異なる購入日の数。同じ日の複数の注文は 1 日として数える。
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+      - name: is_repeat_customer
+        description: リピーターかどうか (purchase_day_count >= 2)。
+        data_tests:
+          - not_null
       - name: days_since_last_purchase
         description: 基準日 − 最後の注文の購入日 (日数)。
         data_tests:
