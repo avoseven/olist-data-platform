@@ -26,7 +26,8 @@
 | [009](decisions/009_clustering_preprocessing.md) | クラスタリングの前処理 (NULL がある顧客は学習から外す、金額と件数は対数変換してから標準化) |
 | [010](decisions/010_rule_flags_and_clustering_scope.md) | リピーターと遅延経験者はフラグで分け、それ以外の顧客を金額・最近性 (・レビュー) でクラスタリングする (一部を 011 で置き換え) |
 | [011](decisions/011_segmentation_purpose_and_roles.md) | セグメンテーションの目的 (購買傾向と購入体験の理解、改善機会の探索) と、分類に使う指標・比べる指標の分担 |
-| [012](decisions/012_segment_definition.md) | セグメントの定義 (リピーターと、単発購入を金額 50 / 150 で 3 つに区切った計 4 つ) |
+| [012](decisions/012_segment_definition.md) | セグメントの定義 (リピーターと、単発購入を金額 50 / 150 で 3 つに区切った計 4 つ。リピーターの定義は 013 で置き換え) |
+| [013](decisions/013_repeat_customer_definition.md) | リピーターを「2 つ以上の異なる日に購入した顧客」にし、mart に `purchase_day_count` を追加する。再購入の分析の定義 |
 
 ## 調査
 
