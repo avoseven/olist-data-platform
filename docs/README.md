@@ -40,3 +40,4 @@
 | [../notebooks/05_segmentation.ipynb](../notebooks/05_segmentation.ipynb) | 単発購入の顧客の金額の区切り方の比較と、セグメントの割り当て |
 | [../notebooks/06_segment_analysis.ipynb](../notebooks/06_segment_analysis.ipynb) | セグメント別の購入体験の分析 (顧客単位・注文単位・購入時期をそろえた比較と、事実・解釈・施策の仮説) |
 | [../notebooks/07_first_purchase_experience.ipynb](../notebooks/07_first_purchase_experience.ipynb) | 初回の購入体験と再購入の関係 (リピーターと単発購入の比較、初回の体験ごとの 90 日・180 日以内の再購入率) |
+| [../notebooks/08_first_purchase_category.ipynb](../notebooks/08_first_purchase_category.ipynb) | 初回購入のカテゴリと再購入の関係 (カテゴリ別の 90 日以内の再購入率、初回と再購入のカテゴリ) |
