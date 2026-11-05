@@ -6,7 +6,7 @@
 
 [report.md](report.md): データ基盤の構築から、顧客セグメンテーション、再購入の分析、ビジネス上の示唆までのまとめ。
 
-[slides/](slides/): 分析の発見と施策の仮説を 2 枚にまとめたスライド (`olist_findings.pptx` と、その画像)。
+[slides/](slides/): 分析の概要と、結果・施策の仮説を 2 枚にまとめたスライド (`olist_findings.pptx` と、その画像)。
 
 ## 仕様
 
