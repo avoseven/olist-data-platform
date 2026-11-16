@@ -39,6 +39,30 @@ dbt が「どこに接続し、どのデータセットに何を作るか」を�
 - **自分で書くのが中心になるのは**、モデルの SQL と yml (元データの登録、テスト、説明)。
 - **dbt が自動で作るもの** (`target/`、`logs/`、`dbt_packages/`) は Git に入れない。
 
+### 名前が固定のものと、自由なもの
+
+dbt が名前で探しにいくファイルは固定で、中身から読み取るファイルは自由。
+
+| ファイル・名前 | 固定 / 自由 | 補足 |
+|---|---|---|
+| `dbt_project.yml` | 固定 | このファイルがあるフォルダが、dbt のプロジェクトとみなされる |
+| `profiles.yml` | ファイル名は固定、置き場所は変えられる | dbt は「`--profiles-dir` の指定や環境変数 `DBT_PROFILES_DIR` → 今いるフォルダ → `~/.dbt/`」の順に探す。このプロジェクトは `dbt/` フォルダで実行するため、`dbt/profiles.yml` が見つかる |
+| `packages.yml`、`package-lock.yml` | 固定 | `dbt deps` が読む・作る |
+| `.sqlfluff` | 固定 | SQLFluff (lint のツール) が探す |
+| 標準のマクロを上書きするマクロの名前 | 固定 | 上書きするには、標準と同じ名前 (例: `generate_schema_name`) にする。ファイル名は自由 |
+| モデルの SQL のファイル名 | 自由 | **ファイル名がそのままモデル名になる**。`stg_orders.sql` は `ref('stg_orders')` で呼び、BigQuery 上も `stg_orders` という名前で作られる。プロジェクトの中で重複は不可 |
+| yml のファイル名 (`_sources.yml` など) | 自由 | dbt は `models/` フォルダの中の yml をすべて読む。先頭の `_` は、フォルダの中で一番上に並べ、SQL と区別しやすくするための慣習 |
+| `tests/` の SQL のファイル名 | 自由 | ファイル名がテスト名になる |
+| フォルダ名 (`staging/`、`marts/`) | 自由 | `dbt_project.yml` の `models:` の下に書く名前と一致させる |
+| `models/`、`macros/`、`tests/` | 標準の名前 | `dbt_project.yml` の `model-paths` などで変えられる。このプロジェクトは標準のまま、明示的に書いている |
+| profiles.yml の中の接続設定の名前 (`olist`)、target の名前 (`dev`) | 自由 | 接続設定の名前は、`dbt_project.yml` の `profile:` と一致させる |
+
+**一致させる必要がある組**:
+
+- `profiles.yml` の `olist:` と、`dbt_project.yml` の `profile: olist`
+- フォルダ名 `models/staging/` と、`dbt_project.yml` の `staging:`
+- モデルのファイル名 `stg_orders.sql` と、`ref('stg_orders')`
+
 | ファイル | 役割 |
 |---|---|
 | [profiles.yml](../../dbt/profiles.yml) | **どこに接続するか** (BigQuery のどのプロジェクトに、どうログインするか) |
