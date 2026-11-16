@@ -1,0 +1,144 @@
+# 1. 接続とプロジェクトの設定
+
+dbt が「どこに接続し、どのデータセットに何を作るか」を決めている 4 つのファイルを見る。
+
+| ファイル | 役割 |
+|---|---|
+| [profiles.yml](../../dbt/profiles.yml) | **どこに接続するか** (BigQuery のどのプロジェクトに、どうログインするか) |
+| [dbt_project.yml](../../dbt/dbt_project.yml) | **何をどう作るか** (どのフォルダのモデルを、どのデータセットに、ビューとテーブルのどちらで作るか) |
+| [generate_schema_name.sql](../../dbt/macros/generate_schema_name.sql) | データセット名の決め方を、このプロジェクト用に変える |
+| [_sources.yml](../../dbt/models/staging/_sources.yml) | dbt の外で作った raw のテーブルを、dbt に登録する |
+
+## 用語: database と schema
+
+dbt は、ほかのデータベース製品に合わせた呼び方を使う。BigQuery では次のように対応する。
+
+| dbt の呼び方 | BigQuery の呼び方 | このプロジェクトの例 |
+|---|---|---|
+| database | プロジェクト | `olist-data-platform-511008` |
+| schema | データセット | `olist_raw`、`olist_staging`、`olist_mart` |
+
+## profiles.yml: 接続の設定
+
+```yaml
+olist:              # 接続設定の名前 (dbt_project.yml の profile: olist と対応)
+  target: dev       # 既定で使う接続先
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth                 # gcloud でログインした認証情報 (ADC) を使う
+      database: "{{ env_var('GCP_PROJECT_ID', 'olist-data-platform-511008') }}"
+      schema: olist_staging         # 既定のデータセット
+      location: US
+      threads: 4                    # 同時に実行するモデルの数
+```
+
+- **`method: oauth`**: パスワードや鍵のファイルを書かず、`gcloud auth application-default login` で保存された認証情報 (ADC) を使う。秘密情報が入らないため、このファイルは Git で管理している。サービスアカウントの鍵のファイルを使う方法に変える場合は、このファイルを Git の管理対象から外す。
+- **`{{ env_var(...) }}`**: `{{ }}` は **Jinja** (ジンジャ) というテンプレートの書き方。dbt は SQL や YAML を実行する前に、この部分を値に置き換える。ここでは、環境変数 `GCP_PROJECT_ID` があればその値を、なければ `olist-data-platform-511008` を使う。
+- **`target: dev`**: 接続先の名前。本番用 (`prod`) などの接続先を増やしたときに、`dbt build --target prod` のように切り替える。今は `dev` の 1 つだけ。
+- **`schema: olist_staging`**: 既定のデータセット。モデルは `dbt_project.yml` で層ごとのデータセットを指定するため、指定のないもの (テストの結果の保存先など) だけがここに作られる。
+- **`threads: 4`**: 互いに依存しないモデル (例: staging の 7 つ) は、最大 4 つまで同時に作る。
+
+## dbt_project.yml: プロジェクトの設定
+
+```yaml
+name: olist
+profile: olist          # profiles.yml の「olist」の接続を使う
+
+models:
+  olist:                # このプロジェクト (name: olist) のモデル
+    staging:            # models/staging/ フォルダ
+      +schema: olist_staging
+      +materialized: view
+    marts:              # models/marts/ フォルダ
+      +schema: olist_mart
+      +materialized: table
+```
+
+- **フォルダごとに設定を書ける。** `staging:` は `models/staging/` フォルダを指す。
+- **`+` が付いた設定は、そのフォルダの中のすべてのモデルに適用される。** モデルのファイルに 1 つずつ書く必要はない。
+- **`materialized`** (実体化の方法) で、モデルを BigQuery 上で何として作るかを決める。
+
+| | view (ビュー) | table (テーブル) |
+|---|---|---|
+| 中身 | SQL だけを保存する。参照されるたびに計算する | 計算した結果を保存する |
+| 向いている場面 | 処理が軽く、常に最新の元データを反映したいとき | 集計が重く、何度も読むとき |
+| このプロジェクト | staging (型変換だけで軽い) | mart (結合や集計が多く、notebook から何度も読む) |
+
+層ごとの役割は [ADR 002](../decisions/002_layer_architecture.md) を参照。
+
+## マクロ: データセット名の決め方を変える
+
+`+schema: olist_mart` と書いても、dbt の標準の動きでは、データセット名が **`olist_staging_olist_mart`** になる (profiles.yml の `schema` と、指定した名前をつなげる)。
+これは、複数の開発者が同じプロジェクトで作業しても、データセットがぶつからないようにするための仕組みである。
+
+このプロジェクトは 1 人で作業するため、指定した名前をそのまま使うように、標準のマクロを上書きした。
+
+```sql
+{% macro generate_schema_name(custom_schema_name, node) -%}
+    {%- if custom_schema_name is none -%}
+        {{ target.schema }}              -- 指定がなければ profiles.yml の schema (olist_staging)
+    {%- else -%}
+        {{ custom_schema_name | trim }}  -- 指定があればその名前 (olist_mart など) をそのまま使う
+    {%- endif -%}
+{%- endmacro %}
+```
+
+- **マクロ**は、Jinja で書く関数のようなもの。dbt は SQL を組み立てるときにマクロを呼び出す。
+- dbt の標準のマクロと同じ名前 (`generate_schema_name`) で `macros/` フォルダに置くと、dbt はこちらを使う。
+- `{%- -%}` の `-` は、前後の空白や改行を取り除く指定。データセット名に余計な空白が入らないようにしている。
+
+## _sources.yml: raw のテーブルを登録する
+
+raw 層は dbt ではなく、`src/load_raw.py` で CSV から作った。dbt から使えるように、場所と名前を登録しているのがこのファイル。
+
+```yaml
+sources:
+  - name: olist              # source のグループ名
+    schema: olist_raw        # raw のデータセット
+    tables:
+      - name: orders                         # dbt の中で使う名前
+        identifier: olist_orders_dataset     # BigQuery 上の実際のテーブル名
+```
+
+`identifier` で、CSV のファイル名そのままの長いテーブル名を、短い名前に付け替えている。
+
+## source() と ref(): テーブルの指定のしかた
+
+モデルの SQL では、テーブル名を直接書かず、関数で指定する。
+
+| 関数 | 指すもの |
+|---|---|
+| `{{ source('グループ名', 'テーブル名') }}` | dbt の外で作ったテーブル (raw) |
+| `{{ ref('モデル名') }}` | dbt で作ったモデル (staging、mart) |
+
+dbt がどう書き換えるかは、`dbt compile --inline` で確かめられる (`dbt/` フォルダで実行)。
+
+```bash
+uv run dbt compile --inline "select * from {{ source('olist', 'orders') }}"
+uv run dbt compile --inline "select * from {{ ref('stg_orders') }}"
+```
+
+| モデルの SQL での書き方 | dbt が書き換えた結果 |
+|---|---|
+| `{{ source('olist', 'orders') }}` | `` `olist-data-platform-511008`.`olist_raw`.`olist_orders_dataset` `` |
+| `{{ ref('stg_orders') }}` | `` `olist-data-platform-511008`.`olist_staging`.`stg_orders` `` |
+
+関数で書く理由は 2 つある。
+
+1. **接続先が変わっても、SQL を書き換えずに済む。** プロジェクト ID やデータセット名は、設定 (profiles.yml、dbt_project.yml、マクロ) から自動で埋められる。
+2. **dbt がモデルの依存関係を知ることができる。** 例えば `fct_delivered_orders` は `ref('stg_orders')` を使っているため、dbt は「`stg_orders` を先に作る」という順番を自動で決める。
+
+## まとめ
+
+```
+profiles.yml        どこに接続するか (プロジェクト、認証、ロケーション)
+      │
+dbt_project.yml     どのフォルダのモデルを、どのデータセットに、何として作るか
+      │
+マクロ              データセット名の決め方 (指定した名前をそのまま使う)
+      │
+_sources.yml        raw のテーブルの場所と名前
+
+→ モデルの SQL では source() と ref() でテーブルを指定し、dbt が実際の名前に書き換える
+```

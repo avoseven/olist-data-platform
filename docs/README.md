@@ -8,6 +8,10 @@
 
 [slides/](slides/): 分析の概要と、結果・施策の仮説を 2 枚にまとめたスライド (`olist_findings.pptx` と、その画像)。
 
+## dbt の読み方ガイド
+
+[dbt_guide/](dbt_guide/README.md): `dbt/` フォルダの中身を、初めて dbt を読む人向けに順番に説明したもの。
+
 ## 仕様
 
 | ファイル | 内容 |
