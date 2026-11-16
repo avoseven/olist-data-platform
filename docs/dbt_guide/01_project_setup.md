@@ -70,6 +70,17 @@ dbt が名前で探しにいくファイルは固定で、中身から読み取�
 | [generate_schema_name.sql](../../dbt/macros/generate_schema_name.sql) | データセット名の決め方を、このプロジェクト用に変える |
 | [_sources.yml](../../dbt/models/staging/_sources.yml) | dbt の外で作った raw のテーブルを、dbt に登録する |
 
+## 用語: モデル
+
+**モデルとは、BigQuery に作るテーブル (またはビュー) 1 つ分の定義**のこと。中身は `models/` フォルダに置いた SQL ファイル 1 つで、SELECT 文を 1 つだけ書く。
+
+```
+stg_orders.sql (SELECT 文)  →  dbt run  →  BigQuery の olist_staging.stg_orders (ビュー)
+```
+
+- `CREATE TABLE` や `CREATE VIEW` は書かない。dbt が SELECT 文を包んで、作る SQL を組み立てる。
+- 何として作るか (ビューかテーブルか) と、どのデータセットに作るかは、dbt_project.yml などの設定で決める。
+
 ## 用語: database と schema
 
 dbt は、ほかのデータベース製品に合わせた呼び方を使う。BigQuery では次のように対応する。
@@ -116,7 +127,8 @@ models:
       +materialized: table
 ```
 
-- **フォルダごとに設定を書ける。** `staging:` は `models/staging/` フォルダを指す。
+- **ここでは、何かを新しく定義しているのではなく、すでにあるものに設定を割り当てている。** `olist:` は `name: olist` で名付けたこのプロジェクトを、`staging:` は `models/staging/` フォルダを指す。名前が合っていないと、設定がどのモデルにも当たらない。
+- `olist:` の階層があるのは、インストールしたパッケージのモデルと区別するため。パッケージのモデルに設定を書くときは、`olist:` と並べてパッケージの名前で書く。
 - **`+` が付いた設定は、そのフォルダの中のすべてのモデルに適用される。** モデルのファイルに 1 つずつ書く必要はない。
 - **`materialized`** (実体化の方法) で、モデルを BigQuery 上で何として作るかを決める。
 
