@@ -83,6 +83,32 @@ create or replace table `olist-data-platform-511008`.`olist_mart`.`customer_feat
 - **モデルを直したときは `-s モデル名+` が基本。** 例えば `fct_delivered_orders.sql` を直したら、それを元に作る `customer_features` も古くなるため、一緒に作り直す。
 - `-s` で選んだモデルに関係するテストも、一緒に実行される。
 
+## 依存関係の図を見る
+
+### dbt docs (ブラウザで見る)
+
+```bash
+uv run dbt docs generate   # 説明ページを target/ に作る (BigQuery には何も作らない)
+uv run dbt docs serve      # 説明ページを表示するサーバーを起動する (Ctrl+C で止める)
+```
+
+- `dbt docs serve` を実行すると、`listening on http://127.0.0.1:8580` のように表示される。ブラウザが自動で開かないとき (WSL など) は、この URL を Windows のブラウザで開く。
+- モデルを選ぶと、yml に書いた説明 (`description`) と列の一覧が見られる。
+- 画面のリネージ (lineage、データの流れ) の表示で、raw → staging → mart の依存関係の図が見られる。
+- 説明ページの中身は `target/` に作られる。コンパイルした SQL も含まれるため、そのまま外部に公開しない。
+
+### dbt list (文字で見る)
+
+```bash
+uv run dbt list -s +customer_features --resource-type model   # customer_features が使うモデルをすべて出す
+```
+
+図ではないが、どのモデルがつながっているかを手早く確かめられる。
+
+### VS Code の拡張機能
+
+dbt Labs の公式の VS Code 拡張機能 (dbt v2 用) を入れると、開いている SQL ファイルのモデルの前後のつながりを、エディタの横に図で表示できる。
+
 ## モデルを直すときの流れ (例)
 
 ```
