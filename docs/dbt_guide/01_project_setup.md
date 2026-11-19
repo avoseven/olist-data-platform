@@ -188,6 +188,28 @@ sources:
 
 `identifier` で、CSV のファイル名そのままの長いテーブル名を、短い名前に付け替えている。
 
+- **このファイルは「実行する」ものではなく、登録 (宣言) だけ。** dbt はこのファイルを読んでも、BigQuery にテーブルがあるかは確かめない。`source()` を使うモデルを作るとき (`dbt build` など) に、初めて raw のテーブルを読みに行く。
+- **そのため、dbt でモデルを作る前に、`src/load_raw.py` で raw のテーブルを作っておく必要がある。** raw がないと、staging を作る段階で「テーブルが見つからない」というエラーになる。BigQuery サンドボックスではテーブルが 60 日で消えるため ([ADR 004](../decisions/004_bigquery_sandbox.md))、消えたら `load_raw.py` からやり直す。
+- 登録すると、テーブル名を `source()` で書けるようになるほか、次のことができる。
+  - dbt の依存関係の図の出発点になる (raw → staging → mart の流れを dbt が把握する)。
+  - `description` で説明を付けられる (`dbt docs` に表示される)。
+  - source にもテストを書ける (このプロジェクトでは、型を変換した後の staging でテストしている)。
+
+## .sqlfluff: SQL の書き方のチェックの設定
+
+[SQLFluff](https://sqlfluff.com/) は、SQL の書き方をチェックする (lint)、整える (format) ためのツール。**dbt 専用ではなく、SQL 全般に使える。** `.sqlfluff` はその設定ファイルで、名前は固定。
+
+```ini
+[sqlfluff]
+templater = dbt      # {{ }} を dbt の書き方として解釈してからチェックする
+dialect = bigquery   # BigQuery の方言 (qualify など) を正しい書き方として扱う
+```
+
+- dbt (v2) の `dbt lint` と `dbt format` は、この SQLFluff 形式の設定を読む。
+- `templater = dbt` がないと、`{{ source(...) }}` を SQL として読めず、エラー扱いになる。
+- `dialect` を指定しないと、`qualify` や `logical_or` のような BigQuery の書き方が誤りと判定されることがある。
+- なくても dbt は動く (任意のファイル)。
+
 ## source() と ref(): テーブルの指定のしかた
 
 モデルの SQL では、テーブル名を直接書かず、関数で指定する。
