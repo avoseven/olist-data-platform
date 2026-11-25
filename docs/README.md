@@ -12,6 +12,14 @@
 
 [dbt_guide/](dbt_guide/README.md): `dbt/` フォルダの中身を、初めて dbt を読む人向けに順番に説明したもの。
 
+## 分析の読み方ガイド
+
+[analysis_guide/](analysis_guide/README.md): 特徴量の選定から、クラスタリング、ルールによるセグメンテーション、再購入の分析までの判断の流れを、ADR と notebook を対応させて説明したもの。
+
+## データ分析の進め方
+
+[analysis_workflow.md](analysis_workflow.md): このプロジェクトに限らない、データ分析の段階と、各段階で自分に問うことのチェックリスト (このプロジェクトでの例つき)。
+
 ## 仕様
 
 | ファイル | 内容 |
